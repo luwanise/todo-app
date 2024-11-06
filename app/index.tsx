@@ -1,67 +1,208 @@
 import { useState } from "react";
-import { Button, FlatList, StyleSheet, Text, View } from "react-native";
-import { TextInput } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet } from 'react-native';
+import Icon from 'react-native-vector-icons/FontAwesome';
+import BouncyCheckbox from "react-native-bouncy-checkbox";
+
+// Define the structure of each todo item
+interface Todo {
+  id: string;
+  text: string;
+  completed: boolean;
+}
 
 export default function HomeScreen() {
   // This will hold our tasks
-  const [task, setTask] = useState('');
-  const [tasks, setTasks] = useState<{key:string; value: string}[]>([]);
+  // todos is a list of todo objects, setTodos is what we use to update todos
+  const [todos, setTodos] = useState<Todo[]>([]);
 
-  const addTask = () => {
-    if (task.trim()) {
-      setTasks([...tasks, {key: Math.random().toString(), value: task}]);
-      setTask('');
+  const [completedTodos, setCompletedTodos] = useState<Todo[]>([]);
+  const [newTodoText, setNewTodoText] = useState('');
+
+  const addTodo = () => {
+    if (newTodoText.trim()){
+      let newTodo = { // create a new todo object
+        id: Date.now().toString(),
+        text: newTodoText,
+        completed: false
+      };
+
+      setTodos( // update the todos using the setTodos()
+        [...todos, newTodo] // ...todos takes the whole todo, and then adds todo
+      );
+
+      setNewTodoText(""); // this changes newTodoText to ""
     }
-  };
+  }
+
+  const completeTodo = (id: string) => {
+    // remove from todos
+    let newTodos = todos.filter(todo => todo.id !== id);
+    setTodos(newTodos);
+
+    // add to completedTodos
+    let completedTodo = todos.filter(todo => todo.id === id)[0];
+
+    setCompletedTodos(
+      [...completedTodos, completedTodo]
+    );
+  }
+
+  const uncompleteTodo = (id: string) => {
+    // remove from completedTodos
+    let newCompletedTodos = completedTodos.filter(completedTodo => completedTodo.id !== id);
+    setCompletedTodos(newCompletedTodos);
+
+    // add to todos
+    let todo = completedTodos.filter(completedTodo => completedTodo.id === id)[0];
+
+    setTodos(
+      [...todos, todo]
+    );
+  }
+
+  const deleteTodo = (id: string) => {
+    let newTodos = todos.filter(todo => todo.id !== id);
+    setTodos(newTodos);
+  }
+
+  const deleteCompletedTodo = (id: string) => {
+    let newCompletedTodos = completedTodos.filter(completedTodo => completedTodo.id !== id);
+    setCompletedTodos(newCompletedTodos);
+  }
 
   return (
-    <View style={styles.screen}>
-      <Text style={styles.title}>To-Do-App</Text>
+    <View style={styles.container}>
+
+      <Text style={styles.header}>Inbox</Text>
       
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your task..."
-        value={task}
-        onChangeText={setTask}
+      <Text style={styles.subheader}>To Do</Text>
+      
+      <FlatList
+        data={todos} // iterates over the todos
+        keyExtractor={(item) => item.id} // helps react track todos using id
+        renderItem={({item}) => ( // renders each item in todos as a view
+          
+          <View style={styles.taskContainer}>
+
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={() => completeTodo(item.id)}>
+              <Icon name="square-o" size={20} color="grey"/>
+            </TouchableOpacity>
+
+            <Text style={styles.taskText}>{item.text}</Text>
+
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={() => deleteTodo(item.id)}>
+              <Icon name="trash" size={20} color="red"/>
+            </TouchableOpacity>
+
+          </View>
+        )}
       />
 
-      <Button title="Add Task" onPress={addTask} />
+      <Text style={styles.subheader}>Completed</Text>
+
       <FlatList
-        data={tasks}
-        renderItem={
-          ({item}) => <Text style={styles.task}>{item.value}</Text>
-        }
+        data={completedTodos} // iterates over the todos
+        keyExtractor={(item) => item.id} // helps react track todos using id
+        renderItem={({item}) => ( // renders each item in todos as a view
+          
+          <View style={styles.taskContainer}>
+            
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={() => uncompleteTodo(item.id)}>
+              <Icon name="check-square" size={20} color="red"/>
+            </TouchableOpacity>
+
+            <Text style={styles.completedTaskText}>{item.text}</Text>
+
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={() => deleteCompletedTodo(item.id)}>
+              <Icon name="trash" size={20} color="grey"/>
+            </TouchableOpacity>
+
+          </View>
+        )}
       />
+
+      <View style={styles.inputContainer}>
+
+        <TextInput
+          style={styles.input}
+          placeholder="I want to do..."
+          value={newTodoText} // connects newTodoText state to display in the input
+          onChangeText={(text) => setNewTodoText(text)} // updates newTodoText as the user types
+        />
+
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={() => addTodo()}>
+          <Icon name="plus" size={20} color="white"/>
+        </TouchableOpacity>
+
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    padding: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
+  container: {
+    flex: 1,
+    padding: 20,
+    paddingTop: 50,
+    backgroundColor: '#fff',
   },
-
-  title: {
+  header: {
+    fontSize: 30,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  subheader: {
     fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginVertical: 5,
   },
-
+  taskContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 5,
+  },
+  taskText: {
+    fontSize: 16,
+    flex: 1,
+  },
+  completedTaskText: {
+    fontSize: 16,
+    color: 'gray',
+    textDecorationLine: 'line-through',
+    flex: 1,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 20,
+  },
   input: {
-    width: '80%',
-    padding: 10,
-    marginBottom: 10,
+    flex: 1,
+    borderColor: '#ddd',
     borderWidth: 1,
-    borderColor: 'black',
     borderRadius: 5,
-  },
-
-  task: {
     padding: 10,
-    fontSize: 18,
-    borderBottomWidth: 1,
-    borderColor: '#ccc',
-  }
+    marginRight: 10,
+  },
+  addButton: {
+    backgroundColor: 'black',
+    padding: 10,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+  },
+  iconButton: {
+    padding: 5,
+  },
 })
