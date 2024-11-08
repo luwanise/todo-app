@@ -2,7 +2,7 @@
 
 This is a simple to-do app built with React Native and Expo that allows users to create, mark as completed, and delete tasks. The app provides a straightforward way to manage tasks, whether for personal use or project management.
 
-![Alt text](assets/images/app_screenshot.jpg)
+<img src="assets/images/app_screenshot.jpg" alt="App Screenshot" width="400"/>
 
 ## Features
 - **Create To-Dos**: Add new tasks to your to-do list.
